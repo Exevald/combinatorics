@@ -1,5 +1,5 @@
-N = 10: 0.017 seconds
-N = 15: 1.7017 hours
-N = 20: 131916 days
-N = 50: 4.51808e+48 years
-N = 100: 1.38638e+142 years
+N = 10: 0.018 seconds
+N = 15: 1.8018 hours
+N = 20: 139676 days
+N = 50: 4.78385e+48 years
+N = 100: 1.46793e+142 years

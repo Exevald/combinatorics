@@ -68,11 +68,16 @@ int main()
 	setlocale(LC_ALL, "rus");
 	double duration;
 	int countOfItems = 0;
-	std::ofstream outputFile("results.txt");
 	std::ifstream inputFile("input.txt");
-	if (!outputFile.is_open())
+	std::ofstream outputFile("results.txt");
+	if (!inputFile.is_open())
 	{
 		puts("Не удалось открыть файл для чтения");
+		exit(1);
+	}
+	if (!outputFile.is_open())
+	{
+		puts("Не удалось открыть файл для записи");
 		exit(1);
 	}
 	std::vector<size_t> vector = GenerateVector(countOfItems, inputFile);
