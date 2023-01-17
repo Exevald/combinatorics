@@ -70,6 +70,7 @@ int main()
 	int countOfItems = 0;
 	std::ifstream inputFile("input.txt");
 	std::ofstream outputFile("results.txt");
+
 	if (!inputFile.is_open())
 	{
 		puts("Не удалось открыть файл для чтения");
