@@ -4,10 +4,10 @@
 #include <fstream>
 #include <boost/timer.hpp>
 
-void TimeCount(double duration, std::ofstream &output)
+void TimeCount(int initialCount, double duration, std::ofstream& output)
 {
 	long double dur = duration;
-	for (int i = 11; i <= 15; i++)
+	for (int i = initialCount + 1; i <= 15; i++)
 	{
 		dur *= i;
 	}
@@ -35,25 +35,18 @@ void TimeCount(double duration, std::ofstream &output)
 	output << "N = 100: " << dur << " years" << std::endl;
 }
 
-std::vector<size_t> GenerateVector(std::string fileName)
+std::vector<size_t> GenerateVector(int& countOfItems, std::ifstream& input)
 {
 	std::vector<size_t> vector;
-	std::ifstream inputFile(fileName);
+
 	size_t value;
 
-	if (!inputFile.is_open())
+	input >> countOfItems;
+	do
 	{
-		puts("Не удалось открыть файл для чтения");
-		exit(1);
-	}
-	else
-	{
-		do
-		{
-			inputFile >> value;
-			vector.push_back(value);
-		} while (!inputFile.eof());
-	}
+		input >> value;
+		vector.push_back(value);
+	} while (!input.eof());
 	return vector;
 }
 
@@ -74,14 +67,16 @@ int main()
 {
 	setlocale(LC_ALL, "rus");
 	double duration;
+	int countOfItems = 0;
 	std::ofstream outputFile("results.txt");
+	std::ifstream inputFile("input.txt");
 	if (!outputFile.is_open())
 	{
 		puts("Не удалось открыть файл для чтения");
 		exit(1);
 	}
-	std::vector<size_t> vector = GenerateVector("input.txt");
+	std::vector<size_t> vector = GenerateVector(countOfItems, inputFile);
 	duration = GeneratePermutations(vector);
-	outputFile << "N = 10: " << duration << " seconds" << std::endl;
-	TimeCount(duration, outputFile);
+	outputFile << "N = " << countOfItems << ": " << duration << " seconds" << std::endl;
+	TimeCount(countOfItems, duration, outputFile);
 }
