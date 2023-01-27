@@ -28,7 +28,7 @@ void GeneratePermutations(std::vector<size_t> original)
 	} while (next_permutation(original.begin(), original.end()));
 }
 
-size_t main()
+int main()
 {
 	setlocale(LC_ALL, "rus");
 	std::cout << "¬ведите число, дл€ вывода его композиций: ";
