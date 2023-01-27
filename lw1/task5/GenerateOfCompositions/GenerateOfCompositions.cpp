@@ -2,15 +2,11 @@
 #include <vector>
 #include <algorithm>
 
-std::vector<size_t> original, composed;
-size_t n;
-
-
-size_t FindMin()
+size_t FindMin(std::vector<size_t> v)
 {
-	for (size_t i = 1; i < original.size(); i++)
+	for (size_t i = 1; i < v.size(); i++)
 	{
-		if (original[0] > original[i] && i != original.size() - 1)
+		if (v[0] > v[i] && i != v.size() - 1)
 		{
 			return i;
 		}
@@ -18,19 +14,22 @@ size_t FindMin()
 	return 0;
 }
 
-void GeneratePermutations(std::vector<size_t> original)
+void GeneratePermutations(std::vector<size_t> v)
 {
-	sort(original.begin(), original.end());
+	sort(v.begin(), v.end());
 	do
 	{
-		copy(original.begin(), original.end(), std::ostream_iterator<size_t>(std::cout, " "));
+		copy(v.begin(), v.end(), std::ostream_iterator<size_t>(std::cout, " "));
 		std::cout << std::endl;
-	} while (next_permutation(original.begin(), original.end()));
+	} while (next_permutation(v.begin(), v.end()));
 }
 
 int main()
 {
+	std::vector<size_t> original, composed;
+	size_t n;
 	setlocale(LC_ALL, "rus");
+
 	std::cout << "¬ведите число, дл€ вывода его композиций: ";
 	std::cin >> n;
 
@@ -44,7 +43,7 @@ int main()
 
 	while (original[0] != n)
 	{
-		size_t i = FindMin();
+		size_t i = FindMin(original);
 		original[i] += 1;
 		original[original.size() - 1] -= 1;
 
