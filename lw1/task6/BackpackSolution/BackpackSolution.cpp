@@ -1,93 +1,131 @@
 #include <iostream>
+#include <string>
+#include <optional>
 #include <fstream>
 #include <vector>
-#include <set>
 
-const int countOfItems = 3;
-const int maxCapacity = 4;
-
-int FindMax(std::vector<int>(&w), std::vector<int>(&c), std::vector<char>(&it))
+struct Args
 {
-	int backpackCost[maxCapacity + 1][maxCapacity + 1];
-	std::set<int>itemsSet;
+	std::string inputFileName;
+	std::string outputFileName;
+};
 
-	for (int i = 0; i <= w.size(); i++)
+std::optional<Args> ParseArgs(int argc, char* argv[])
+{
+	if (argc != 3)
 	{
-		for (int j = 0; j <= maxCapacity; j++)
+		std::cout << "Invalid argumants count" << std::endl;
+		std::cout << "Usage: BackpackSolution.exe <input file> <output file>" << std::endl;
+		return std::nullopt;
+	}
+	Args args;
+	args.inputFileName = argv[1];
+	args.outputFileName = argv[2];
+
+	return args;
+}
+
+bool IsExistingFiles(std::ifstream& inputFile, std::ofstream& outputFile)
+{
+	if (!inputFile || !outputFile)
+	{
+		std::cout << "Failed to open files for reading or writing. Please check filenames." << std::endl;
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+void GetResultCombination(
+	int k, std::vector<int>& comb, int& allWeight, std::vector<int>& weights, int& allCost, std::vector<int>& costs,
+	int limitWeight, int limitCost, int& resultCost, int& resultWeight, std::vector<int>& resultCombination)
+{
+	for (int j = 0; j < k; j++)
+	{
+		if (comb[j] == 1)
 		{
-			if ((i == 0) || (j == 0))
-			{
-				backpackCost[i][j] = 0;
-			}
-			else
-			{
-				if (w[i - 1] > j)
-				{
-					backpackCost[i][j] = backpackCost[i - 1][j];
-				}
-				else
-				{
-					int prevMax = backpackCost[i - 1][j];
-					int currentCost = c[i - 1] + backpackCost[i - 1][j - w[i - 1]];
-					if (currentCost <= prevMax) {
-						itemsSet.insert(i - 1);
-					}
-					backpackCost[i][j] = std::max(prevMax, currentCost);
-				}
-			}
+			allWeight += weights[j];
+			allCost += costs[j];
 		}
 	}
-	for (auto item: itemsSet)
+	if (allWeight <= limitWeight && allCost >= limitCost)
 	{
-		std::cout << it[item] << " ";
+		if (allCost > resultCost)
+		{
+			resultCost = allCost;
+			resultWeight = allWeight;
+			resultCombination = comb;
+		}
 	}
-	return backpackCost[countOfItems][maxCapacity];
-}
-
-void InitVectors(std::vector<int>(&w), std::vector<int>(&c), std::vector<char>(&it), std::ifstream& input)
-{
-	char ch;
-	int value;
-	for (int i = 0; i < countOfItems; i++)
+	else
 	{
-		input >> ch;
-		it.push_back(ch);
-	}
-	for (int i = 0; i < countOfItems; i++)
-	{
-		input >> value;
-		w.push_back(value);
-	}
-	for (int i = 0; i < countOfItems; i++)
-	{
-		input >> value;
-		c.push_back(value);
+		allWeight = 0;
+		allCost = 0;
 	}
 }
 
-int main()
+void CheckBackpack(int k, int limitWeight, int limitCost, std::vector<int> comb, std::vector<int> weights, std::vector<int> costs)
 {
-	setlocale(LC_ALL, "rus");
+	int i = 0;
+	int allWeight = 0, allCost = 0;
+	std::vector<int> resultCombination;
+	int resultWeight = 0;
+	int resultCost = 0;
 
-	std::vector<char>items;
+	while (comb[k] != 1)
+	{
+		GetResultCombination(k, comb, allWeight, weights, allCost, costs, limitWeight, limitCost, resultCost, resultWeight, resultCombination);
+		i = 0;
+		while (comb[i] == 1)
+		{
+			comb[i] = 0;
+			i++;
+		}
+		comb[i] = 1;
+	}
+	std::cout << "Result combination: ";
+	copy(resultCombination.begin(), resultCombination.end() - 1, std::ostream_iterator<size_t>(std::cout, " "));
+	std::cout << std::endl;
+	std::cout << "Result weight: " << resultWeight << std::endl;
+	std::cout << "Result cost: " << resultCost << std::endl;
+}
+
+int main(int argc, char* argv[])
+{
+	auto args = ParseArgs(argc, argv);
+
+	if (!args)
+	{
+		return 1;
+	}
+
+	std::ifstream inputFile;
+	std::ofstream outputFile;
+
+	inputFile.open(args->inputFileName);
+	outputFile.open(args->outputFileName);
+
+	if (!IsExistingFiles(inputFile, outputFile))
+	{
+		return 1;
+	}
+
+	int n, T, S, weight, cost;
+	inputFile >> n >> T >> S;
+
+	std::vector<int> combinations(n + 1);
 	std::vector<int> weights;
 	std::vector<int> costs;
-	std::ifstream inputFile("input.txt");
-	int result;
 
-	if (!inputFile.is_open())
+	for (int i = 0; i < n; i++)
 	{
-		puts("Не удалось открыть файл для чтения");
-		exit(1);
+		inputFile >> weight >> cost;
+		weights.push_back(weight);
+		costs.push_back(cost);
 	}
-	InitVectors(weights, costs, items, inputFile);
-	for (int i = 0; i < countOfItems; i++)
-	{
-		std::cout << items[i] << " " << weights[i] << " " << costs[i] << std::endl;
-	}
-	std::cout << std::endl;
-	result = FindMax(weights, costs, items);
-	std::cout << std::endl << result;
 
+	CheckBackpack(n, T, S, combinations, weights, costs);
 	return 0;
 }
