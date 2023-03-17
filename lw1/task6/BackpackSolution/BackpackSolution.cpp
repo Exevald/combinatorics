@@ -10,6 +10,12 @@ struct Args
 	std::string outputFileName;
 };
 
+enum class ErrorCode : int
+{
+	OK = 0,
+	ERROR = 1
+};
+
 std::optional<Args> ParseArgs(int argc, char* argv[])
 {
 	if (argc != 3)
@@ -50,7 +56,7 @@ void GetResultCombination(
 			allCost += costs[j];
 		}
 	}
-	if (allWeight <= limitWeight && allCost >= limitCost)
+	if ((allWeight <= limitWeight) && (allCost >= limitCost))
 	{
 		if (allCost > resultCost)
 		{
@@ -66,7 +72,7 @@ void GetResultCombination(
 	}
 }
 
-void CheckBackpack(int k, int limitWeight, int limitCost, std::vector<int> comb, std::vector<int> weights, std::vector<int> costs)
+ErrorCode CheckBackpack(int k, int limitWeight, int limitCost, std::vector<int> comb, std::vector<int> weights, std::vector<int> costs)
 {
 	int i = 0;
 	int allWeight = 0, allCost = 0;
@@ -85,11 +91,20 @@ void CheckBackpack(int k, int limitWeight, int limitCost, std::vector<int> comb,
 		}
 		comb[i] = 1;
 	}
-	std::cout << "Result combination: ";
-	copy(resultCombination.begin(), resultCombination.end() - 1, std::ostream_iterator<size_t>(std::cout, " "));
-	std::cout << std::endl;
-	std::cout << "Result weight: " << resultWeight << std::endl;
-	std::cout << "Result cost: " << resultCost << std::endl;
+	if ((resultWeight == 0) && (resultCost == 0))
+	{
+		std::cout << "Wrong input" << std::endl;
+		return ErrorCode::ERROR;
+	}
+	else
+	{
+		std::cout << "Result combination: ";
+		copy(resultCombination.begin(), resultCombination.end() - 1, std::ostream_iterator<size_t>(std::cout, " "));
+		std::cout << std::endl;
+		std::cout << "Result weight: " << resultWeight << std::endl;
+		std::cout << "Result cost: " << resultCost << std::endl;
+		return ErrorCode::OK;
+	}
 }
 
 int main(int argc, char* argv[])
