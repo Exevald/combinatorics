@@ -28,5 +28,8 @@
     <Text Include="tests\input.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="tests\output.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

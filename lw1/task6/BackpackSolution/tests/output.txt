@@ -1,0 +1,9 @@
+Best combination: 7 10 14 19 20 23 
+Total weight: 100
+Total cost: 336
+
+Time: 0.760863
+N = 15: 0.000211351 hours
+N = 20: 16.3839 days
+N = 50: 5.61145e+44 years
+N = 100: 1.72188e+138 years

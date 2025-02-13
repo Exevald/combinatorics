@@ -3,6 +3,8 @@
 #include <optional>
 #include <fstream>
 #include <vector>
+#include <algorithm>
+#include <chrono>
 
 struct Args
 {
@@ -10,137 +12,175 @@ struct Args
 	std::string outputFileName;
 };
 
-enum class ErrorCode : int
+struct Item
 {
-	OK = 0,
-	ERROR = 1
+	int weight;
+	int cost;
 };
+
+struct BackpackResult
+{
+	std::vector<size_t> combination;
+	int totalWeight;
+	int totalCost;
+};
+
+void TimeCount(int initialCount, double duration, std::ofstream& output)
+{
+	long double dur = duration;
+	for (int i = initialCount + 1; i <= 15; i++)
+	{
+		dur *= i;
+	}
+	dur /= 3600;
+	output << "N = 15: " << dur << " hours" << std::endl;
+
+	for (int i = 16; i <= 20; i++)
+	{
+		dur *= i;
+	}
+	dur /= 24;
+	output << "N = 20: " << dur << " days" << std::endl;
+
+	for (int i = 21; i <= 50; i++)
+	{
+		dur *= i;
+	}
+	dur /= 365;
+	output << "N = 50: " << dur << " years" << std::endl;
+
+	for (int i = 51; i <= 100; i++)
+	{
+		dur *= i;
+	}
+	output << "N = 100: " << dur << " years" << std::endl;
+}
 
 std::optional<Args> ParseArgs(int argc, char* argv[])
 {
 	if (argc != 3)
 	{
-		std::cout << "Invalid argumants count" << std::endl;
+		std::cout << "Invalid arguments count" << std::endl;
 		std::cout << "Usage: BackpackSolution.exe <input file> <output file>" << std::endl;
 		return std::nullopt;
 	}
-	Args args;
-	args.inputFileName = argv[1];
-	args.outputFileName = argv[2];
-
-	return args;
+	return Args{ argv[1], argv[2] };
 }
 
-bool IsExistingFiles(std::ifstream& inputFile, std::ofstream& outputFile)
+void OpenFiles(std::ifstream& inputFile, std::ofstream& outputFile, const std::string& inputFileName, const std::string& outputFileName)
 {
+	inputFile.open(inputFileName);
+	outputFile.open(outputFileName);
+
 	if (!inputFile || !outputFile)
 	{
-		std::cout << "Failed to open files for reading or writing. Please check filenames." << std::endl;
-		return false;
+		throw std::runtime_error("Failed to open files for reading or writing");
 	}
-	else
+};
+
+bool NextOccurrence(std::vector<size_t>& occurrence)
+{
+	size_t n = occurrence.size();
+	for (size_t i = n; i-- > 0;)
 	{
-		return true;
+		if (occurrence[i] == 0)
+		{
+			occurrence[i] = 1;
+			std::fill(occurrence.begin() + i + 1, occurrence.end(), 0);
+			return true;
+		}
 	}
+	return false;
 }
 
-void GetResultCombination(
-	int k, std::vector<int>& comb, int& allWeight, std::vector<int>& weights, int& allCost, std::vector<int>& costs,
-	int limitWeight, int limitCost, int& resultCost, int& resultWeight, std::vector<int>& resultCombination)
+BackpackResult FindBestCombination(const std::vector<Item>& items, int maxWeight, int minCost)
 {
-	for (int j = 0; j < k; j++)
+	int n = items.size();
+	std::vector<size_t> combination(n, 0);
+	BackpackResult bestResult{ {}, 0, 0 };
+
+	do
 	{
-		if (comb[j] == 1)
+		int currentWeight = 0;
+		int currentCost = 0;
+		for (size_t i = 0; i < n; ++i)
 		{
-			allWeight += weights[j];
-			allCost += costs[j];
+			currentWeight += combination[i] * items[i].weight;
+			currentCost += combination[i] * items[i].cost;
 		}
-	}
-	if ((allWeight <= limitWeight) && (allCost >= limitCost))
-	{
-		if (allCost > resultCost)
+
+		if (currentWeight <= maxWeight && currentCost >= minCost && currentCost > bestResult.totalCost)
 		{
-			resultCost = allCost;
-			resultWeight = allWeight;
-			resultCombination = comb;
+			bestResult = { combination, currentWeight, currentCost };
 		}
-	}
-	else
-	{
-		allWeight = 0;
-		allCost = 0;
-	}
+	} while (NextOccurrence(combination));
+
+	return bestResult;
 }
 
-ErrorCode CheckBackpack(int k, int limitWeight, int limitCost, std::vector<int> comb, std::vector<int> weights, std::vector<int> costs)
+BackpackResult SolveBackpackProblem(std::ifstream& inputFile, std::ofstream& outputFile)
 {
-	int i = 0;
-	int allWeight = 0, allCost = 0;
-	std::vector<int> resultCombination;
-	int resultWeight = 0;
-	int resultCost = 0;
+	int numItems, maxWeight, minCost;
+	inputFile >> numItems >> maxWeight >> minCost;
 
-	while (comb[k] != 1)
+	std::vector<Item> items(numItems);
+	for (int i = 0; i < numItems; ++i)
 	{
-		GetResultCombination(k, comb, allWeight, weights, allCost, costs, limitWeight, limitCost, resultCost, resultWeight, resultCombination);
-		i = 0;
-		while (comb[i] == 1)
+		inputFile >> items[i].weight >> items[i].cost;
+	}
+
+	BackpackResult result = FindBestCombination(items, maxWeight, minCost);
+
+	if (result.totalCost == 0 && result.totalWeight == 0)
+	{
+		throw std::runtime_error("No valid combination found");
+	}
+
+	outputFile << "Best combination: ";
+	for (size_t i = 0; i < result.combination.size(); ++i)
+	{
+		if (result.combination[i])
 		{
-			comb[i] = 0;
-			i++;
+			outputFile << i + 1 << " ";
 		}
-		comb[i] = 1;
 	}
-	if ((resultWeight == 0) && (resultCost == 0))
-	{
-		std::cout << "Wrong input" << std::endl;
-		return ErrorCode::ERROR;
-	}
-	else
-	{
-		std::cout << "Result combination: ";
-		copy(resultCombination.begin(), resultCombination.end() - 1, std::ostream_iterator<size_t>(std::cout, " "));
-		std::cout << std::endl;
-		std::cout << "Result weight: " << resultWeight << std::endl;
-		std::cout << "Result cost: " << resultCost << std::endl;
-		return ErrorCode::OK;
-	}
+
+	outputFile << std::endl;
+	outputFile << "Total weight: " << result.totalWeight << std::endl;
+	outputFile << "Total cost: " << result.totalCost << std::endl;
+
+	return result;
 }
 
 int main(int argc, char* argv[])
 {
-	auto args = ParseArgs(argc, argv);
+	auto start = std::chrono::steady_clock::now();
 
+	auto args = ParseArgs(argc, argv);
 	if (!args)
 	{
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	std::ifstream inputFile;
 	std::ofstream outputFile;
 
-	inputFile.open(args->inputFileName);
-	outputFile.open(args->outputFileName);
-
-	if (!IsExistingFiles(inputFile, outputFile))
+	try
 	{
-		return 1;
+		OpenFiles(inputFile, outputFile, args->inputFileName, args->outputFileName);
+		auto result = SolveBackpackProblem(inputFile, outputFile);
+
+		auto end = std::chrono::steady_clock::now();
+		std::chrono::duration<double> elapsed = end - start;
+		outputFile << std::endl << "Time: " << elapsed.count() << std::endl;
+
+		TimeCount(result.combination.size(), elapsed.count(), outputFile);
+	}
+	catch (const std::exception& exception)
+	{
+		std::cout << exception.what() << std::endl;
+		return EXIT_FAILURE;
 	}
 
-	int n, T, S, weight, cost;
-	inputFile >> n >> T >> S;
-
-	std::vector<int> combinations(n + 1);
-	std::vector<int> weights;
-	std::vector<int> costs;
-
-	for (int i = 0; i < n; i++)
-	{
-		inputFile >> weight >> cost;
-		weights.push_back(weight);
-		costs.push_back(cost);
-	}
-
-	CheckBackpack(n, T, S, combinations, weights, costs);
-	return 0;
+	return EXIT_SUCCESS;
 }

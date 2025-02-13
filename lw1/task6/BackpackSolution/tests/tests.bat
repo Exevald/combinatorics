@@ -18,7 +18,7 @@ REM Указан отсутствующий файл для записи. Программа должна прекратить работу
 echo Test 2 passed
 
 REM Правильный ввод данных
-%PROGRAM% "tests/input.txt" "%TEMP%\out.txt" || goto err
+%PROGRAM% "tests/input.txt" "tests/output.txt" || goto err
 echo Test 3 passed
 
 REM Тесты прошли успешно
