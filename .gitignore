@@ -236,3 +236,7 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 samples/01-basics/string-joiner/out.txt
+
+# CLion debug files
+.idea
+cmake-build-debug
