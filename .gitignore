@@ -242,5 +242,5 @@ samples/01-basics/string-joiner/out.txt
 cmake-build-debug
 
 # VSCode build files
-
 build
+.vscode
