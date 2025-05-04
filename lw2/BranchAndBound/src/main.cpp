@@ -2,6 +2,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <iterator>
 
 struct Args
 {
