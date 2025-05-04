@@ -60,6 +60,7 @@ public:
 	[[nodiscard]] std::vector<Face> GetFaces() const noexcept;
 
 	void ErschovColoring();
+	void GraphFaceColoring();
 	bool CheckFourColorTheorem() const;
 
 	[[nodiscard]] const std::unordered_map<int, std::string>& GetVertexColors() const noexcept
@@ -75,6 +76,10 @@ private:
 	void AddVertex(int id, const std::string& name = "");
 	void AddEdge(int start, int end);
 	void AddFace(int id, const std::vector<int>& boundaryVertices, const std::string& color = "");
+	CGraph CreateDualGraph() const;
+	bool IsBipartite() const;
+	void FillBipartiteGraph();
+	void ConvertDualGraphToDefault(std::unordered_map<int, std::string> dualColors);
 
 	std::unordered_map<int, Vertex> m_vertices;
 	std::vector<Edge> m_edges;

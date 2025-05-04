@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <queue>
 #include <unordered_set>
 
 CGraph::CGraph(const std::map<int, std::set<int>>& adjacencies, const std::vector<std::set<int>>& faces)
@@ -100,6 +102,51 @@ void CGraph::ErschovColoring()
 	m_vertexColors = vertexColors;
 }
 
+void CGraph::GraphFaceColoring()
+{
+
+	if (IsBipartite())
+	{
+		FillBipartiteGraph();
+	}
+	else
+	{
+		CGraph dualGraph = CreateDualGraph();
+
+		std::unordered_map<int, std::string> dualColors;
+		int colorIndex = 0;
+
+		for (const auto& [faceId, _] : dualGraph.GetVertices())
+		{
+			if (dualColors.count(faceId) == 0)
+			{
+				std::string color = "Color" + std::to_string(colorIndex++);
+				dualColors[faceId] = color;
+
+				std::queue<int> queue;
+				queue.push(faceId);
+
+				while (!queue.empty())
+				{
+					int currentFace = queue.front();
+					queue.pop();
+
+					for (const auto& edge : dualGraph.GetEdges())
+					{
+						if (edge.start == currentFace && dualColors.count(edge.end) == 0)
+						{
+							dualColors[edge.end] = color;
+							queue.push(edge.end);
+						}
+					}
+				}
+			}
+		}
+
+		ConvertDualGraphToDefault(dualColors);
+	}
+}
+
 void CGraph::RenderGraphSFML(const std::string& windowTitle, int width, int height) const
 {
 	sf::RenderWindow window(sf::VideoMode(width, height), windowTitle);
@@ -166,14 +213,16 @@ void CGraph::RenderGraphSFML(const std::string& windowTitle, int width, int heig
 			if (m_vertexColors.count(id) > 0)
 			{
 				std::string colorName = m_vertexColors.at(id);
-				if (colorName == "Color1")
+				if (colorName == "Color0")
 					circle.setFillColor(sf::Color::Red);
-				else if (colorName == "Color2")
+				else if (colorName == "Color1")
 					circle.setFillColor(sf::Color::Green);
-				else if (colorName == "Color3")
+				else if (colorName == "Color2")
 					circle.setFillColor(sf::Color::Blue);
-				else if (colorName == "Color4")
+				else if (colorName == "Color3")
 					circle.setFillColor(sf::Color::Yellow);
+				else if (colorName == "ColorDefault")
+					circle.setFillColor(sf::Color::Magenta);
 			}
 
 			window.draw(circle);
@@ -196,13 +245,14 @@ void CGraph::RenderGraphSFML(const std::string& windowTitle, int width, int heig
 bool CGraph::CheckFourColorTheorem() const
 {
 	std::unordered_set<std::string> usedColors;
-	for (const auto& [vertex, color] : m_vertexColors)
+	for (const auto& face : m_faces)
 	{
-		usedColors.insert(color);
-		if (usedColors.size() > 4)
-		{
-			return false;
-		}
+		usedColors.insert(face.color);
+	}
+	if (usedColors.size() > 4)
+	{
+		std::cerr << "Used " << usedColors.size() << " colors" << std::endl;
+		return false;
 	}
 	return true;
 }
@@ -220,4 +270,155 @@ void CGraph::AddEdge(int start, int end)
 void CGraph::AddFace(int id, const std::vector<int>& boundaryVertices, const std::string& color)
 {
 	m_faces.emplace_back(id, boundaryVertices, color);
+}
+
+CGraph CGraph::CreateDualGraph() const
+{
+	CGraph dualGraph;
+
+	for (int i = 0; i < m_faces.size(); ++i)
+	{
+		dualGraph.AddVertex(i);
+	}
+
+	for (int i = 0; i < m_faces.size(); ++i)
+	{
+		for (int j = i + 1; j < m_faces.size(); ++j)
+		{
+			std::unordered_set<int> face1Set(m_faces[i].boundaryVertices.begin(), m_faces[i].boundaryVertices.end());
+			std::unordered_set<int> face2Set(m_faces[j].boundaryVertices.begin(), m_faces[j].boundaryVertices.end());
+
+			for (int vertex : face1Set)
+			{
+				if (face2Set.count(vertex) > 0)
+				{
+					dualGraph.AddEdge(i, j);
+					break;
+				}
+			}
+		}
+	}
+
+	return dualGraph;
+}
+
+bool CGraph::IsBipartite() const
+{
+	std::unordered_map<int, int> colorMap;
+	std::queue<int> queue;
+
+	for (const auto& [id, _] : m_vertices)
+	{
+		if (colorMap.count(id) == 0)
+		{
+			colorMap[id] = 1;
+			queue.push(id);
+
+			while (!queue.empty())
+			{
+				int current = queue.front();
+				queue.pop();
+
+				for (const auto& edge : m_edges)
+				{
+					if (edge.start == current)
+					{
+						int neighbor = edge.end;
+						if (colorMap.count(neighbor) == 0)
+						{
+							colorMap[neighbor] = (colorMap[current] == 1) ? 2 : 1;
+							queue.push(neighbor);
+						}
+						else if (colorMap[neighbor] == colorMap[current])
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+void CGraph::FillBipartiteGraph()
+{
+	std::unordered_map<int, int> colorMap;
+	std::queue<int> queue;
+
+	for (const auto& [id, _] : m_vertices)
+	{
+		if (colorMap.count(id) == 0)
+		{
+			colorMap[id] = 1;
+			queue.push(id);
+
+			while (!queue.empty())
+			{
+				int current = queue.front();
+				queue.pop();
+
+				for (const auto& edge : m_edges)
+				{
+					if (edge.start == current)
+					{
+						int neighbor = edge.end;
+						if (colorMap.count(neighbor) == 0)
+						{
+							colorMap[neighbor] = (colorMap[current] == 1) ? 2 : 1;
+							queue.push(neighbor);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (const auto& [vertex, color] : colorMap)
+	{
+		m_vertexColors[vertex] = (color == 1) ? "Color1" : "Color2";
+	}
+}
+
+void CGraph::ConvertDualGraphToDefault(std::unordered_map<int, std::string> dualColors)
+{
+	for (const auto& [faceId, color] : dualColors)
+	{
+		m_faces[faceId].color = color;
+
+		for (int vertex : m_faces[faceId].boundaryVertices)
+		{
+			if (m_vertexColors.count(vertex) == 0)
+			{
+				bool conflict = false;
+				for (const auto& edge : m_edges)
+				{
+					if (edge.start == vertex || edge.end == vertex)
+					{
+						int neighbor = (edge.start == vertex) ? edge.end : edge.start;
+						if (m_vertexColors.count(neighbor) > 0 && m_vertexColors[neighbor] == color)
+						{
+							conflict = true;
+							break;
+						}
+					}
+				}
+
+				if (!conflict)
+				{
+					m_vertexColors[vertex] = color;
+				}
+			}
+		}
+	}
+
+	for (const auto& [id, _] : m_vertices)
+	{
+		if (m_vertexColors.count(id) == 0)
+		{
+			std::string uniqueColor = "ColorDefault";
+			m_vertexColors[id] = uniqueColor;
+		}
+	}
 }

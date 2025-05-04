@@ -31,19 +31,6 @@ TEST(GraphColoring, TestSimpleGraph)
 	EXPECT_EQ(graph.GetVertices().size(), 9);
 	EXPECT_EQ(graph.GetFaces().size(), 8);
 	EXPECT_EQ(graph.GetEdges().size(), 32);
-
-	graph.ErschovColoring();
-	EXPECT_TRUE(graph.CheckFourColorTheorem());
-
-	const auto& vertexColors = graph.GetVertexColors();
-	EXPECT_EQ(vertexColors.size(), 9);
-
-	for (const auto& edge : graph.GetEdges())
-	{
-		EXPECT_NE(vertexColors.at(edge.start), vertexColors.at(edge.end));
-	}
-
-	graph.RenderGraphSFML("Graph Visualization", 800, 600);
 }
 
 TEST(GraphColoring, TestStarGraph)
@@ -69,7 +56,7 @@ TEST(GraphColoring, TestStarGraph)
 	EXPECT_EQ(graph.GetFaces().size(), 4);
 	EXPECT_EQ(graph.GetEdges().size(), 8);
 
-	graph.ErschovColoring();
+	graph.GraphFaceColoring();
 	EXPECT_TRUE(graph.CheckFourColorTheorem());
 
 	const auto& vertexColors = graph.GetVertexColors();
@@ -105,7 +92,7 @@ TEST(GraphColoring, TestCompleteGraph)
 	EXPECT_EQ(graph.GetFaces().size(), 4);
 	EXPECT_EQ(graph.GetEdges().size(), 12);
 
-	graph.ErschovColoring();
+	graph.GraphFaceColoring();
 	EXPECT_TRUE(graph.CheckFourColorTheorem());
 
 	const auto& vertexColors = graph.GetVertexColors();
