@@ -10,3 +10,4 @@ enable_testing()
 
 add_subdirectory(lw2/BranchAndBound)
 add_subdirectory(lw3/GraphColoring)
+add_subdirectory(lw4/SteinerProblem)
